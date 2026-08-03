@@ -1,0 +1,7 @@
+pip install streamlit
+pip install pandas
+pip install plotly
+pip install scipy
+pip install openpyxl
+pip install reportlab
+pip install bcrypt
