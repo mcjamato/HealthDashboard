@@ -13,10 +13,11 @@ from repositories.domain_repository import (
     NutritionRepository,
 )
 from services.analytics_service import AnalyticsService
+from utilities.month_filter import MonthFilter
 
 
 class CustomerDashboardPage:
-    """Displays domain charts without showing data-entry controls."""
+    """Displays read-only domain dashboards with monthly filtering."""
 
     def __init__(
         self,
@@ -31,20 +32,30 @@ class CustomerDashboardPage:
             "mental": mental_repository,
             "nutrition": nutrition_repository,
         }
+
         self.analytics = AnalyticsService()
 
     @staticmethod
-    def _dates() -> list[date]:
-        start = date.today() - timedelta(days=6)
+    def _dates(
+        days: int = 180,
+    ) -> list[date]:
+        """Return six months of sample dates."""
+
+        start = date.today() - timedelta(
+            days=days - 1
+        )
+
         return [
             start + timedelta(days=offset)
-            for offset in range(7)
+            for offset in range(days)
         ]
 
     def _sample_data(
         self,
         domain: str,
     ) -> pd.DataFrame:
+        """Create six months of sample data for one domain."""
+
         dates = self._dates()
 
         samples = {
@@ -52,19 +63,23 @@ class CustomerDashboardPage:
                 {
                     "recorded_on": dates,
                     "duration_minutes": [
-                        20, 35, 25, 45, 30, 50, 40
+                        25 + (index % 7) * 4
+                        for index in range(len(dates))
                     ],
                     "calories_burned": [
-                        120, 220, 155, 310, 190, 360, 275
+                        170 + (index % 8) * 18
+                        for index in range(len(dates))
                     ],
                     "exercise_type": [
-                        "Walking",
-                        "Running",
-                        "Strength",
-                        "Cycling",
-                        "Walking",
-                        "Sports",
-                        "Strength",
+                        [
+                            "Walking",
+                            "Running",
+                            "Strength",
+                            "Cycling",
+                            "Yoga",
+                            "Sports",
+                        ][index % 6]
+                        for index in range(len(dates))
                     ],
                 }
             ),
@@ -72,13 +87,27 @@ class CustomerDashboardPage:
                 {
                     "recorded_on": dates,
                     "sleep_hours": [
-                        6.8, 7.2, 7.0, 7.7, 7.4, 8.0, 7.8
+                        round(
+                            6.7
+                            + (index / len(dates)) * 0.9
+                            + (index % 5) * 0.05,
+                            1,
+                        )
+                        for index in range(len(dates))
                     ],
                     "sleep_quality": [
-                        6, 7, 7, 8, 7, 9, 8
+                        min(
+                            10,
+                            6 + index // 45,
+                        )
+                        for index in range(len(dates))
                     ],
                     "weight_kg": [
-                        82.0, 81.9, 81.8, 81.8, 81.6, 81.5, 81.4
+                        round(
+                            82.0 - index * 0.01,
+                            1,
+                        )
+                        for index in range(len(dates))
                     ],
                 }
             ),
@@ -86,16 +115,32 @@ class CustomerDashboardPage:
                 {
                     "recorded_on": dates,
                     "mood_score": [
-                        6, 7, 6, 8, 7, 9, 8
+                        min(
+                            10,
+                            5 + index // 40,
+                        )
+                        for index in range(len(dates))
                     ],
                     "stress_score": [
-                        7, 6, 6, 5, 5, 4, 4
+                        max(
+                            2,
+                            8 - index // 45,
+                        )
+                        for index in range(len(dates))
                     ],
                     "energy_score": [
-                        5, 6, 6, 7, 7, 8, 8
+                        min(
+                            10,
+                            5 + index // 45,
+                        )
+                        for index in range(len(dates))
                     ],
                     "focus_score": [
-                        5, 6, 7, 7, 7, 8, 8
+                        min(
+                            10,
+                            6 + index // 50,
+                        )
+                        for index in range(len(dates))
                     ],
                 }
             ),
@@ -103,16 +148,20 @@ class CustomerDashboardPage:
                 {
                     "recorded_on": dates,
                     "calories": [
-                        2050, 1980, 2150, 2020, 2080, 2200, 2100
+                        1950 + (index % 7) * 45
+                        for index in range(len(dates))
                     ],
                     "protein_g": [
-                        95, 105, 100, 115, 110, 120, 118
+                        90 + (index % 6) * 4
+                        for index in range(len(dates))
                     ],
                     "carbs_g": [
-                        240, 220, 260, 230, 245, 270, 250
+                        220 + (index % 5) * 10
+                        for index in range(len(dates))
                     ],
                     "fat_g": [
-                        65, 60, 70, 62, 64, 72, 66
+                        60 + (index % 4) * 3
+                        for index in range(len(dates))
                     ],
                 }
             ),
@@ -125,6 +174,8 @@ class CustomerDashboardPage:
         figure,
         sample: bool,
     ) -> None:
+        """Add shared chart spacing and sample labeling."""
+
         figure.update_layout(
             margin={
                 "l": 20,
@@ -156,24 +207,30 @@ class CustomerDashboardPage:
             "nutrition": "🥗 Nutrition Dashboard",
         }
 
-        st.title(titles[domain])
+        st.title(
+            titles[domain]
+        )
+
         st.caption(
-            "This page is for viewing analytics only. "
-            "Use Customer Data to enter new records."
+            "This page is read-only. Use Customer "
+            "Data to add new records."
         )
 
         if client_id is None:
             frame = pd.DataFrame()
         else:
-            frame = self.repositories[
-                domain
-            ].list_for_client(client_id)
+            frame = (
+                self.repositories[domain]
+                .list_for_client(client_id)
+            )
 
         sample = frame.empty
+
         display = (
             self._sample_data(domain)
             if sample
-            else self.analytics.prepare_chronological(frame)
+            else self.analytics
+            .prepare_chronological(frame)
         )
 
         if sample:
@@ -182,58 +239,94 @@ class CustomerDashboardPage:
                 "customer has real records."
             )
 
+        display, selected_month = MonthFilter.apply(
+            frame=display,
+            key=f"{domain}_dashboard_month",
+            label="Display month",
+        )
+
+        st.caption(
+            f"Showing: {selected_month}"
+        )
+
+        if display.empty:
+            st.warning(
+                "No records are available for the "
+                "selected month."
+            )
+            return
+
         if domain == "exercise":
-            metric_columns = st.columns(3)
-            metric_columns[0].metric(
+            columns = st.columns(3)
+
+            columns[0].metric(
                 "Total minutes",
                 f"{display['duration_minutes'].sum():.0f}",
             )
-            metric_columns[1].metric(
+
+            columns[1].metric(
                 "Average session",
                 f"{display['duration_minutes'].mean():.1f} min",
             )
-            metric_columns[2].metric(
+
+            columns[2].metric(
                 "Calories burned",
                 f"{display['calories_burned'].sum():.0f}",
             )
 
-            line = px.line(
+            first_chart = px.line(
                 display,
                 x="recorded_on",
                 y="duration_minutes",
                 markers=True,
                 title="Exercise duration trend",
             )
-            bar = px.bar(
-                display,
+
+            grouped_exercise = (
+                display.groupby(
+                    "exercise_type",
+                    as_index=False,
+                )["duration_minutes"]
+                .sum()
+            )
+
+            second_chart = px.bar(
+                grouped_exercise,
                 x="exercise_type",
                 y="duration_minutes",
                 title="Exercise minutes by activity",
             )
 
         elif domain == "health":
-            metric_columns = st.columns(3)
-            metric_columns[0].metric(
+            columns = st.columns(3)
+
+            columns[0].metric(
                 "Latest sleep",
                 f"{display['sleep_hours'].iloc[-1]:.1f} hr",
             )
-            metric_columns[1].metric(
+
+            columns[1].metric(
                 "Sleep quality",
                 f"{display['sleep_quality'].iloc[-1]:.0f}/10",
             )
-            metric_columns[2].metric(
+
+            columns[2].metric(
                 "Latest weight",
                 f"{display['weight_kg'].iloc[-1]:.1f} kg",
             )
 
-            line = px.line(
+            first_chart = px.line(
                 display,
                 x="recorded_on",
-                y=["sleep_hours", "sleep_quality"],
+                y=[
+                    "sleep_hours",
+                    "sleep_quality",
+                ],
                 markers=True,
                 title="Sleep duration and quality",
             )
-            bar = px.line(
+
+            second_chart = px.line(
                 display,
                 x="recorded_on",
                 y="weight_kg",
@@ -242,21 +335,24 @@ class CustomerDashboardPage:
             )
 
         elif domain == "mental":
-            metric_columns = st.columns(3)
-            metric_columns[0].metric(
+            columns = st.columns(3)
+
+            columns[0].metric(
                 "Latest mood",
                 f"{display['mood_score'].iloc[-1]:.0f}/10",
             )
-            metric_columns[1].metric(
+
+            columns[1].metric(
                 "Latest stress",
                 f"{display['stress_score'].iloc[-1]:.0f}/10",
             )
-            metric_columns[2].metric(
+
+            columns[2].metric(
                 "Latest energy",
                 f"{display['energy_score'].iloc[-1]:.0f}/10",
             )
 
-            line = px.line(
+            first_chart = px.line(
                 display,
                 x="recorded_on",
                 y=[
@@ -268,7 +364,10 @@ class CustomerDashboardPage:
                 markers=True,
                 title="Mental wellness trends",
             )
-            line.update_yaxes(range=[0, 10])
+
+            first_chart.update_yaxes(
+                range=[0, 10]
+            )
 
             averages = (
                 display[
@@ -282,35 +381,42 @@ class CustomerDashboardPage:
                 .mean()
                 .reset_index()
             )
+
             averages.columns = [
                 "metric",
                 "average_score",
             ]
 
-            bar = px.bar(
+            second_chart = px.bar(
                 averages,
                 x="metric",
                 y="average_score",
                 title="Average wellness scores",
             )
-            bar.update_yaxes(range=[0, 10])
+
+            second_chart.update_yaxes(
+                range=[0, 10]
+            )
 
         else:
-            metric_columns = st.columns(3)
-            metric_columns[0].metric(
+            columns = st.columns(3)
+
+            columns[0].metric(
                 "Average calories",
                 f"{display['calories'].mean():.0f}",
             )
-            metric_columns[1].metric(
+
+            columns[1].metric(
                 "Average protein",
                 f"{display['protein_g'].mean():.1f} g",
             )
-            metric_columns[2].metric(
+
+            columns[2].metric(
                 "Entries",
                 len(display),
             )
 
-            line = px.line(
+            first_chart = px.line(
                 display,
                 x="recorded_on",
                 y="calories",
@@ -329,12 +435,13 @@ class CustomerDashboardPage:
                 .sum()
                 .reset_index()
             )
+
             macros.columns = [
                 "nutrient",
                 "grams",
             ]
 
-            bar = px.pie(
+            second_chart = px.pie(
                 macros,
                 names="nutrient",
                 values="grams",
@@ -342,21 +449,24 @@ class CustomerDashboardPage:
             )
 
         self._label_sample(
-            line,
+            first_chart,
             sample,
         )
+
         self._label_sample(
-            bar,
+            second_chart,
             sample,
         )
 
         left, right = st.columns(2)
+
         left.plotly_chart(
-            line,
+            first_chart,
             use_container_width=True,
         )
+
         right.plotly_chart(
-            bar,
+            second_chart,
             use_container_width=True,
         )
 

@@ -2,7 +2,7 @@ from datetime import date
 import plotly.express as px
 import streamlit as st
 from models.domain_models import HealthRecord
-from pages.shared import PageSupport
+from views.shared import PageSupport
 from services.analytics_service import AnalyticsService
 
 class HealthPage:
