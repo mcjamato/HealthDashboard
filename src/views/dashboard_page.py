@@ -14,6 +14,7 @@ from repositories.domain_repository import (
 )
 from services.analytics_service import AnalyticsService
 from utilities.month_filter import MonthFilter
+from views.client_header import ClientHeader
 
 
 class DashboardPage:
@@ -202,8 +203,12 @@ class DashboardPage:
     def render(
         self,
         client_id: int | None,
+        client: dict | None = None,
     ) -> None:
-        st.title("📊 Dashboard")
+        ClientHeader.render(
+            client=client,
+            page_label="📊 Dashboard",
+        )
 
         st.caption(
             "Select a month to recalculate all "

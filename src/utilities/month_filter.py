@@ -5,88 +5,106 @@ import streamlit as st
 
 
 class MonthFilter:
-    """Provides a reusable month selector for dashboard data."""
+    """Provides reusable month filtering for dashboard DataFrames."""
 
     ALL_MONTHS = "All months"
 
     @staticmethod
-    def apply(
-        frame: pd.DataFrame,
-        key: str,
-        label: str = "Month",
-    ) -> tuple[pd.DataFrame, str]:
-        """
-        Filter a DataFrame by a selected calendar month.
+    def prepare(frame: pd.DataFrame) -> pd.DataFrame:
+        """Return a copy with recorded_on converted to pandas datetime."""
+        if frame.empty:
+            return frame.copy()
 
-        The DataFrame must contain a recorded_on column.
-        """
-
-        if (
-            frame.empty
-            or "recorded_on" not in frame.columns
-        ):
-            return (
-                frame.copy(),
-                MonthFilter.ALL_MONTHS,
+        if "recorded_on" not in frame.columns:
+            raise ValueError(
+                "MonthFilter requires a 'recorded_on' column."
             )
 
-        filtered = frame.copy()
-
-        filtered["recorded_on"] = pd.to_datetime(
-            filtered["recorded_on"],
+        prepared = frame.copy()
+        prepared["recorded_on"] = pd.to_datetime(
+            prepared["recorded_on"],
             errors="coerce",
         )
 
-        filtered = filtered.dropna(
-            subset=["recorded_on"]
-        )
+        return prepared.dropna(subset=["recorded_on"])
 
-        if filtered.empty:
-            return (
-                filtered,
-                MonthFilter.ALL_MONTHS,
-            )
+    @staticmethod
+    def available_months(frame: pd.DataFrame) -> list[str]:
+        """Return available months from newest to oldest."""
+        prepared = MonthFilter.prepare(frame)
 
-        filtered["_month_key"] = (
-            filtered["recorded_on"]
+        if prepared.empty:
+            return []
+
+        periods = (
+            prepared["recorded_on"]
             .dt.to_period("M")
-        )
-
-        periods = sorted(
-            filtered["_month_key"]
             .dropna()
-            .unique(),
-            reverse=True,
+            .unique()
         )
 
-        month_labels = {
-            period.strftime("%B %Y"): period
-            for period in periods
-        }
-
-        options = [
-            MonthFilter.ALL_MONTHS,
-            *month_labels.keys(),
+        return [
+            period.strftime("%B %Y")
+            for period in sorted(periods, reverse=True)
         ]
 
-        selected = st.selectbox(
+    @staticmethod
+    def select_month(
+        frame: pd.DataFrame,
+        key: str,
+        label: str = "Display month",
+    ) -> str:
+        """Render a Streamlit selector and return the selected month."""
+        options = [
+            MonthFilter.ALL_MONTHS,
+            *MonthFilter.available_months(frame),
+        ]
+
+        return st.selectbox(
             label,
             options,
             key=key,
         )
 
-        if selected != MonthFilter.ALL_MONTHS:
-            selected_period = (
-                month_labels[selected]
-            )
+    @staticmethod
+    def filter(
+        frame: pd.DataFrame,
+        selected_month: str,
+    ) -> pd.DataFrame:
+        """Filter a DataFrame to the selected Month Year."""
+        prepared = MonthFilter.prepare(frame)
 
-            filtered = filtered[
-                filtered["_month_key"]
-                == selected_period
-            ]
+        if (
+            prepared.empty
+            or selected_month == MonthFilter.ALL_MONTHS
+        ):
+            return prepared
 
-        filtered = filtered.drop(
-            columns=["_month_key"]
+        month_labels = (
+            prepared["recorded_on"]
+            .dt.strftime("%B %Y")
         )
 
-        return filtered, selected
+        return prepared[
+            month_labels == selected_month
+        ].copy()
+
+    @staticmethod
+    def apply(
+        frame: pd.DataFrame,
+        key: str,
+        label: str = "Display month",
+    ) -> tuple[pd.DataFrame, str]:
+        """Render a selector and return the filtered frame and selection."""
+        selected_month = MonthFilter.select_month(
+            frame=frame,
+            key=key,
+            label=label,
+        )
+
+        filtered = MonthFilter.filter(
+            frame=frame,
+            selected_month=selected_month,
+        )
+
+        return filtered, selected_month

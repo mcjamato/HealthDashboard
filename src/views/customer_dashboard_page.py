@@ -14,6 +14,7 @@ from repositories.domain_repository import (
 )
 from services.analytics_service import AnalyticsService
 from utilities.month_filter import MonthFilter
+from views.client_header import ClientHeader
 
 
 class CustomerDashboardPage:
@@ -199,6 +200,7 @@ class CustomerDashboardPage:
         self,
         domain: str,
         client_id: int | None,
+        client: dict | None = None,
     ) -> None:
         titles = {
             "exercise": "🏃 Exercise Dashboard",
@@ -207,8 +209,9 @@ class CustomerDashboardPage:
             "nutrition": "🥗 Nutrition Dashboard",
         }
 
-        st.title(
-            titles[domain]
+        ClientHeader.render(
+            client=client,
+            page_label=titles[domain],
         )
 
         st.caption(
