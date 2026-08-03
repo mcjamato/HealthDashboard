@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from components.layout import DashboardLayout
 from repositories.domain_repository import (
     ExerciseRepository,
     HealthRepository,
@@ -14,11 +15,21 @@ from repositories.domain_repository import (
 )
 from services.analytics_service import AnalyticsService
 from utilities.month_filter import MonthFilter
-from views.client_header import ClientHeader
+
+
+PLOTLY_CONFIG = {
+    "displayModeBar": True,
+    "displaylogo": False,
+    "responsive": True,
+    "modeBarButtonsToRemove": [
+        "lasso2d",
+        "select2d",
+    ],
+}
 
 
 class DashboardPage:
-    """Renders the main dashboard with monthly filtering."""
+    """Renders the main dashboard using reusable layout components."""
 
     def __init__(
         self,
@@ -37,8 +48,6 @@ class DashboardPage:
     def _sample_dates(
         days: int = 180,
     ) -> list[date]:
-        """Return six months of sample dates ending today."""
-
         start = date.today() - timedelta(
             days=days - 1
         )
@@ -49,8 +58,6 @@ class DashboardPage:
         ]
 
     def _sample_exercise(self) -> pd.DataFrame:
-        """Create temporary exercise preview data."""
-
         dates = self._sample_dates()
 
         return pd.DataFrame(
@@ -68,8 +75,6 @@ class DashboardPage:
         )
 
     def _sample_health(self) -> pd.DataFrame:
-        """Create temporary health preview data."""
-
         dates = self._sample_dates()
 
         return pd.DataFrame(
@@ -95,8 +100,6 @@ class DashboardPage:
         )
 
     def _sample_mental(self) -> pd.DataFrame:
-        """Create temporary mental-wellness preview data."""
-
         dates = self._sample_dates()
 
         return pd.DataFrame(
@@ -127,8 +130,6 @@ class DashboardPage:
         )
 
     def _sample_nutrition(self) -> pd.DataFrame:
-        """Create temporary nutrition preview data."""
-
         dates = self._sample_dates()
 
         return pd.DataFrame(
@@ -146,41 +147,9 @@ class DashboardPage:
         )
 
     @staticmethod
-    def _style_figure(
-        figure,
-        sample: bool,
-    ) -> None:
-        """Apply shared Plotly formatting."""
-
-        figure.update_layout(
-            margin={
-                "l": 20,
-                "r": 20,
-                "t": 65,
-                "b": 20,
-            },
-            legend_title_text="",
-        )
-
-        if sample:
-            figure.add_annotation(
-                text="SAMPLE DATA",
-                xref="paper",
-                yref="paper",
-                x=1,
-                y=1.14,
-                showarrow=False,
-                font={
-                    "size": 11,
-                },
-            )
-
-    @staticmethod
     def _combine_dates(
         *frames: pd.DataFrame,
     ) -> pd.DataFrame:
-        """Combine recorded dates from all dashboard domains."""
-
         date_frames = [
             frame[["recorded_on"]]
             for frame in frames
@@ -200,12 +169,41 @@ class DashboardPage:
             ignore_index=True,
         )
 
+    @staticmethod
+    def _style_figure(
+        figure,
+        sample: bool,
+    ) -> None:
+        figure.update_layout(
+            margin={
+                "l": 20,
+                "r": 20,
+                "t": 35,
+                "b": 20,
+            },
+            legend_title_text="",
+            hovermode="x unified",
+        )
+
+        if sample:
+            figure.add_annotation(
+                text="SAMPLE DATA",
+                xref="paper",
+                yref="paper",
+                x=1,
+                y=1.10,
+                showarrow=False,
+                font={
+                    "size": 11,
+                },
+            )
+
     def render(
         self,
         client_id: int | None,
         client: dict | None = None,
     ) -> None:
-        ClientHeader.render(
+        DashboardLayout.render_client_header(
             client=client,
             page_label="📊 Dashboard",
         )
@@ -220,27 +218,19 @@ class DashboardPage:
             health = pd.DataFrame()
             mental = pd.DataFrame()
             nutrition = pd.DataFrame()
-
-            st.info(
-                "No customer is selected. Sample data "
-                "is displayed for interface preview."
-            )
         else:
             exercise = (
                 self.exercise_repository
                 .list_for_client(client_id)
             )
-
             health = (
                 self.health_repository
                 .list_for_client(client_id)
             )
-
             mental = (
                 self.mental_repository
                 .list_for_client(client_id)
             )
-
             nutrition = (
                 self.nutrition_repository
                 .list_for_client(client_id)
@@ -256,26 +246,21 @@ class DashboardPage:
             if exercise_is_sample
             else exercise
         )
-
         display_health = (
             self._sample_health()
             if health_is_sample
             else health
         )
-
         display_mental = (
             self._sample_mental()
             if mental_is_sample
             else mental
         )
-
         display_nutrition = (
             self._sample_nutrition()
             if nutrition_is_sample
             else nutrition
         )
-
-        st.subheader("Dashboard filters")
 
         available_dates = self._combine_dates(
             display_exercise,
@@ -284,27 +269,32 @@ class DashboardPage:
             display_nutrition,
         )
 
-        selected_month = MonthFilter.select_month(
-            frame=available_dates,
-            key="main_dashboard_month",
-            label="Display month",
+        selected_month = (
+            DashboardLayout.render_filter_bar(
+                render_filter=lambda: (
+                    MonthFilter.select_month(
+                        frame=available_dates,
+                        key="main_dashboard_month",
+                        label="Display month",
+                    )
+                ),
+                title="Dashboard filters",
+                width_ratio=(1, 3),
+            )
         )
 
         display_exercise = MonthFilter.filter(
             display_exercise,
             selected_month,
         )
-
         display_health = MonthFilter.filter(
             display_health,
             selected_month,
         )
-
         display_mental = MonthFilter.filter(
             display_mental,
             selected_month,
         )
-
         display_nutrition = MonthFilter.filter(
             display_nutrition,
             selected_month,
@@ -314,45 +304,10 @@ class DashboardPage:
             f"Showing: {selected_month}"
         )
 
-        if any(
-            frame.empty
-            for frame in [
-                display_exercise,
-                display_health,
-                display_mental,
-                display_nutrition,
-            ]
-        ):
-            st.warning(
-                "One or more domains do not contain "
-                "records for the selected month."
-            )
-
-        metric_columns = st.columns(4)
-
-        exercise_minutes = (
-            self.analytics.sum(
-                display_exercise,
-                "duration_minutes",
-            )
+        exercise_minutes = self.analytics.sum(
+            display_exercise,
+            "duration_minutes",
         )
-
-        exercise_change = (
-            self.analytics
-            .percent_change_for_frame(
-                display_exercise,
-                "duration_minutes",
-            )
-        )
-
-        metric_columns[0].metric(
-            "Exercise minutes",
-            f"{exercise_minutes:.0f}",
-            self.analytics.format_change(
-                exercise_change
-            ),
-        )
-
         latest_sleep = (
             self.analytics.latest_value(
                 display_health,
@@ -360,23 +315,6 @@ class DashboardPage:
             )
             or 0
         )
-
-        sleep_change = (
-            self.analytics
-            .percent_change_for_frame(
-                display_health,
-                "sleep_hours",
-            )
-        )
-
-        metric_columns[1].metric(
-            "Latest sleep",
-            f"{latest_sleep:.1f} hr",
-            self.analytics.format_change(
-                sleep_change
-            ),
-        )
-
         latest_mood = (
             self.analytics.latest_value(
                 display_mental,
@@ -384,98 +322,113 @@ class DashboardPage:
             )
             or 0
         )
-
-        mood_change = (
-            self.analytics
-            .percent_change_for_frame(
-                display_mental,
-                "mood_score",
-            )
+        recorded_calories = self.analytics.sum(
+            display_nutrition,
+            "calories",
         )
 
-        metric_columns[2].metric(
-            "Latest mood",
-            f"{latest_mood:.1f}/10",
-            self.analytics.format_change(
-                mood_change
-            ),
-        )
-
-        recorded_calories = (
-            self.analytics.sum(
-                display_nutrition,
-                "calories",
-            )
-        )
-
-        calorie_change = (
-            self.analytics
-            .percent_change_for_frame(
-                display_nutrition,
-                "calories",
-            )
-        )
-
-        metric_columns[3].metric(
-            "Recorded calories",
-            f"{recorded_calories:.0f}",
-            self.analytics.format_change(
-                calorie_change
-            ),
-        )
-
-        if any(
+        DashboardLayout.render_kpi_row(
             [
-                exercise_is_sample,
-                health_is_sample,
-                mental_is_sample,
-                nutrition_is_sample,
+                {
+                    "label": "🏃 Exercise",
+                    "value": f"{exercise_minutes:.0f} min",
+                    "delta": self.analytics.format_change(
+                        self.analytics.percent_change_for_frame(
+                            display_exercise,
+                            "duration_minutes",
+                        )
+                    ),
+                    "help": (
+                        "Total exercise minutes for "
+                        "the selected month."
+                    ),
+                },
+                {
+                    "label": "❤️ Sleep",
+                    "value": f"{latest_sleep:.1f} hr",
+                    "delta": self.analytics.format_change(
+                        self.analytics.percent_change_for_frame(
+                            display_health,
+                            "sleep_hours",
+                        )
+                    ),
+                    "help": (
+                        "Latest sleep duration within "
+                        "the selected month."
+                    ),
+                },
+                {
+                    "label": "😊 Mood",
+                    "value": f"{latest_mood:.1f}/10",
+                    "delta": self.analytics.format_change(
+                        self.analytics.percent_change_for_frame(
+                            display_mental,
+                            "mood_score",
+                        )
+                    ),
+                    "help": (
+                        "Latest mood score within the "
+                        "selected month."
+                    ),
+                },
+                {
+                    "label": "🥗 Nutrition",
+                    "value": f"{recorded_calories:.0f} kcal",
+                    "delta": self.analytics.format_change(
+                        self.analytics.percent_change_for_frame(
+                            display_nutrition,
+                            "calories",
+                        )
+                    ),
+                    "help": (
+                        "Total recorded calories for "
+                        "the selected month."
+                    ),
+                },
             ]
-        ):
-            st.warning(
-                "One or more panels use sample data. "
-                "Sample values are not written to SQLite."
-            )
+        )
 
-        st.divider()
-        st.subheader("Domain trends")
+        DashboardLayout.render_section_title(
+            "Domain trends",
+            (
+                "Hover over any point to inspect "
+                "the exact date and value."
+            ),
+        )
 
-        left, right = st.columns(2)
+        charts = []
 
-        if display_exercise.empty:
-            left.info(
-                "No exercise records are available "
-                "for this month."
-            )
-        else:
+        if not display_exercise.empty:
             exercise_figure = px.line(
                 display_exercise,
                 x="recorded_on",
                 y="duration_minutes",
                 markers=True,
-                title="Exercise duration",
                 labels={
                     "recorded_on": "Date",
                     "duration_minutes": "Minutes",
                 },
             )
-
+            exercise_figure.update_traces(
+                hovertemplate=(
+                    "<b>%{x|%B %d, %Y}</b><br>"
+                    "Exercise: %{y:.0f} minutes"
+                    "<extra></extra>"
+                )
+            )
             self._style_figure(
                 exercise_figure,
                 exercise_is_sample,
             )
-
-            left.plotly_chart(
-                exercise_figure,
-                use_container_width=True,
+            charts.append(
+                (
+                    "Exercise duration",
+                    exercise_figure,
+                    PLOTLY_CONFIG,
+                )
             )
 
-        if display_health.empty:
-            right.info(
-                "No health records are available "
-                "for this month."
-            )
-        else:
+        if not display_health.empty:
             health_figure = px.line(
                 display_health,
                 x="recorded_on",
@@ -484,32 +437,20 @@ class DashboardPage:
                     "sleep_quality",
                 ],
                 markers=True,
-                title="Sleep duration and quality",
-                labels={
-                    "recorded_on": "Date",
-                    "value": "Measurement",
-                    "variable": "Metric",
-                },
             )
-
             self._style_figure(
                 health_figure,
                 health_is_sample,
             )
-
-            right.plotly_chart(
-                health_figure,
-                use_container_width=True,
+            charts.append(
+                (
+                    "Sleep and recovery",
+                    health_figure,
+                    PLOTLY_CONFIG,
+                )
             )
 
-        left_two, right_two = st.columns(2)
-
-        if display_mental.empty:
-            left_two.info(
-                "No mental-wellness records are "
-                "available for this month."
-            )
-        else:
+        if not display_mental.empty:
             mental_figure = px.line(
                 display_mental,
                 x="recorded_on",
@@ -519,69 +460,48 @@ class DashboardPage:
                     "energy_score",
                 ],
                 markers=True,
-                title="Mood, stress, and energy",
-                labels={
-                    "recorded_on": "Date",
-                    "value": "Score",
-                    "variable": "Metric",
-                },
             )
-
             mental_figure.update_yaxes(
                 range=[0, 10]
             )
-
             self._style_figure(
                 mental_figure,
                 mental_is_sample,
             )
-
-            left_two.plotly_chart(
-                mental_figure,
-                use_container_width=True,
+            charts.append(
+                (
+                    "Mental wellness",
+                    mental_figure,
+                    PLOTLY_CONFIG,
+                )
             )
 
-        if display_nutrition.empty:
-            right_two.info(
-                "No nutrition records are available "
-                "for this month."
-            )
-        else:
+        if not display_nutrition.empty:
             nutrition_figure = px.bar(
                 display_nutrition,
                 x="recorded_on",
                 y="calories",
-                title="Calories by date",
-                labels={
-                    "recorded_on": "Date",
-                    "calories": "Calories",
-                },
             )
-
+            nutrition_figure.update_traces(
+                hovertemplate=(
+                    "<b>%{x|%B %d, %Y}</b><br>"
+                    "Calories: %{y:,.0f}"
+                    "<extra></extra>"
+                )
+            )
             self._style_figure(
                 nutrition_figure,
                 nutrition_is_sample,
             )
-
-            right_two.plotly_chart(
-                nutrition_figure,
-                use_container_width=True,
+            charts.append(
+                (
+                    "Nutrition",
+                    nutrition_figure,
+                    PLOTLY_CONFIG,
+                )
             )
 
-        st.subheader(
-            "Templates reserved for later versions"
-        )
-
-        goal_column, notification_column = (
-            st.columns(2)
-        )
-
-        goal_column.info(
-            "🎯 Goals\n\n"
-            "Template placeholder — not active yet."
-        )
-
-        notification_column.info(
-            "🔔 Notifications\n\n"
-            "Template placeholder — not active yet."
+        DashboardLayout.render_chart_grid(
+            charts=charts,
+            columns_per_row=2,
         )
