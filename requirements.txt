@@ -1,7 +1,8 @@
-pip install streamlit
-pip install pandas
-pip install plotly
-pip install scipy
-pip install openpyxl
-pip install reportlab
-pip install bcrypt
+streamlit>=1.37
+pandas>=2.2
+plotly>=5.22
+openpyxl>=3.1
+reportlab>=4.2
+scipy>=1.13
+bcrypt>=4.1
+pytest>=8.2
