@@ -1,28 +1,56 @@
+from __future__ import annotations
+
 import pandas as pd
 
+from database.database import DatabaseManager
+
+
 class ReportRepository:
-    def __init__(self, db):
+    def __init__(self, db: DatabaseManager) -> None:
         self.db = db
 
-    def create_schedule(self, client_id, report_type, frequency, next_run_date, output_format):
+    def create_schedule(
+        self,
+        client_id: int,
+        report_type: str,
+        frequency: str,
+        next_run_date: str,
+        output_format: str,
+    ) -> int:
         with self.db.connection() as connection:
             cursor = connection.execute(
-                "INSERT INTO scheduled_reports(client_id, report_type, frequency, next_run_date, output_format) VALUES (?, ?, ?, ?, ?)",
+                '''
+                INSERT INTO scheduled_reports(
+                    client_id, report_type, frequency, next_run_date, output_format
+                )
+                VALUES (?, ?, ?, ?, ?)
+                ''',
                 (client_id, report_type, frequency, next_run_date, output_format),
             )
             return int(cursor.lastrowid)
 
-    def list_active_schedules(self):
+    def list_active_schedules(self) -> pd.DataFrame:
         with self.db.connection() as connection:
             return pd.read_sql_query(
-                """SELECT scheduled_reports.id,
-                clients.first_name || ' ' || clients.last_name AS client,
-                report_type, frequency, next_run_date, output_format
-                FROM scheduled_reports JOIN clients ON clients.id = scheduled_reports.client_id
-                WHERE scheduled_reports.active = 1 ORDER BY next_run_date""",
+                '''
+                SELECT
+                    scheduled_reports.id,
+                    clients.first_name || ' ' || clients.last_name AS client,
+                    report_type,
+                    frequency,
+                    next_run_date,
+                    output_format
+                FROM scheduled_reports
+                JOIN clients ON clients.id = scheduled_reports.client_id
+                WHERE scheduled_reports.active = 1
+                ORDER BY next_run_date
+                ''',
                 connection,
             )
 
-    def deactivate_schedule(self, schedule_id):
+    def deactivate_schedule(self, schedule_id: int) -> None:
         with self.db.connection() as connection:
-            connection.execute("UPDATE scheduled_reports SET active = 0 WHERE id = ?", (schedule_id,))
+            connection.execute(
+                "UPDATE scheduled_reports SET active = 0 WHERE id = ?",
+                (schedule_id,),
+            )

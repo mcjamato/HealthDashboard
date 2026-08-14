@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+
 
 class DatabaseManager:
     def __init__(self, database_path: Path, schema_path: Path) -> None:
@@ -25,5 +27,6 @@ class DatabaseManager:
             connection.close()
 
     def initialize(self) -> None:
+        schema = self.schema_path.read_text(encoding="utf-8")
         with self.connection() as connection:
-            connection.executescript(self.schema_path.read_text(encoding="utf-8"))
+            connection.executescript(schema)

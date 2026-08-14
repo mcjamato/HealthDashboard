@@ -1,14 +1,17 @@
 import streamlit as st
 
+
 class ImportPage:
-    def __init__(self, importer):
+    def __init__(self, importer) -> None:
         self.importer = importer
 
-    def render(self, role):
+    def render(self, role: str) -> None:
         st.title("📥 Excel Import")
+
         if role != "admin":
             st.warning("Administrator only.")
             return
+
         st.download_button(
             "Download workbook template",
             self.importer.template_bytes(),
@@ -16,7 +19,12 @@ class ImportPage:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True,
         )
-        uploaded = st.file_uploader("Upload completed workbook", type=["xlsx"])
+
+        uploaded = st.file_uploader(
+            "Upload completed workbook",
+            type=["xlsx"],
+        )
+
         if uploaded and st.button("Import workbook", use_container_width=True):
             result = self.importer.import_workbook(uploaded.getvalue())
             st.success(f"Imported rows: {result.imported}")

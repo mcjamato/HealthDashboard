@@ -1,11 +1,14 @@
 from datetime import date
+
 import streamlit as st
+
 from reports.export_service import ExcelExportService
 from reports.pdf_generator import PDFReportGenerator
 from services.correlation_service import CorrelationService
 
+
 class ReportsPage:
-    def __init__(self, clients, exercise, health, mental, nutrition, reports):
+    def __init__(self, clients, exercise, health, mental, nutrition, reports) -> None:
         self.clients = clients
         self.exercise = exercise
         self.health = health
@@ -14,43 +17,100 @@ class ReportsPage:
         self.reports = reports
         self.pdf = PDFReportGenerator()
         self.excel = ExcelExportService()
-        self.correlation = CorrelationService()
+        self.corr = CorrelationService()
 
-    def render(self, client_id, role):
+    def render(self, client_id: int | None, role: str) -> None:
         st.title("📄 Reports")
+
         if client_id is None:
             st.info("Select a client.")
             return
+
         clients = self.clients.list_active()
         match = clients[clients["id"] == client_id]
         if match.empty:
             st.error("Client not found.")
             return
+
         client = match.iloc[0].to_dict()
         name = f"{client['first_name']} {client['last_name']}"
-        exercise = self.exercise.list_for_client(client_id)
-        health = self.health.list_for_client(client_id)
-        mental = self.mental.list_for_client(client_id)
-        nutrition = self.nutrition.list_for_client(client_id)
-        matrix = self.correlation.correlation_matrix(self.correlation.build_daily_dataset(exercise, health, mental, nutrition))
-        pdf = self.pdf.create(name, [("Exercise", exercise), ("Health", health), ("Mental Wellness", mental), ("Nutrition", nutrition)], matrix)
-        st.download_button("Download client PDF report", pdf, f"{name.replace(' ', '_')}_wellness_report.pdf", "application/pdf", use_container_width=True)
+
+        e = self.exercise.list_for_client(client_id)
+        h = self.health.list_for_client(client_id)
+        m = self.mental.list_for_client(client_id)
+        n = self.nutrition.list_for_client(client_id)
+
+        matrix = self.corr.correlation_matrix(
+            self.corr.build_daily_dataset(e, h, m, n)
+        )
+
+        pdf_bytes = self.pdf.create(
+            name,
+            [
+                ("Exercise", e),
+                ("Health", h),
+                ("Mental Wellness", m),
+                ("Nutrition", n),
+            ],
+            matrix,
+        )
+
+        st.download_button(
+            "Download client PDF report",
+            pdf_bytes,
+            f"{name.replace(' ', '_')}_wellness_report.pdf",
+            "application/pdf",
+            use_container_width=True,
+        )
+
         if role == "admin":
-            xlsx = self.excel.client_workbook(client, exercise, health, mental, nutrition, matrix)
-            st.download_button("Download administrator Excel report", xlsx, f"{name.replace(' ', '_')}_wellness_report.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
-            with st.form("schedule"):
-                report_type = st.selectbox("Report type", ["Complete wellness", "Exercise", "Health", "Mental Wellness", "Nutrition"])
-                frequency = st.selectbox("Frequency", ["Weekly", "Monthly", "Quarterly", "Annually"])
+            excel_bytes = self.excel.client_workbook(
+                client, e, h, m, n, matrix
+            )
+            st.download_button(
+                "Download administrator Excel report",
+                excel_bytes,
+                f"{name.replace(' ', '_')}_wellness_report.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+
+            st.subheader("Schedule a report")
+            with st.form("schedule_report"):
+                report_type = st.selectbox(
+                    "Report type",
+                    [
+                        "Complete wellness",
+                        "Exercise",
+                        "Health",
+                        "Mental Wellness",
+                        "Nutrition",
+                    ],
+                )
+                frequency = st.selectbox(
+                    "Frequency",
+                    ["Weekly", "Monthly", "Quarterly", "Annually"],
+                )
                 next_run = st.date_input("Next run date", date.today())
-                output_format = st.selectbox("Output format", ["PDF", "PDF and Excel"])
+                output_format = st.selectbox(
+                    "Output format",
+                    ["PDF", "PDF and Excel"],
+                )
                 submitted = st.form_submit_button("Save schedule")
+
             if submitted:
-                self.reports.create_schedule(client_id, report_type, frequency, next_run.isoformat(), output_format)
+                self.reports.create_schedule(
+                    client_id,
+                    report_type,
+                    frequency,
+                    next_run.isoformat(),
+                    output_format,
+                )
                 st.rerun()
+
             schedules = self.reports.list_active_schedules()
-            st.dataframe(schedules, use_container_width=True, hide_index=True)
-            if not schedules.empty:
-                schedule_id = st.selectbox("Schedule to deactivate", schedules["id"].astype(int).tolist())
-                if st.button("Deactivate schedule"):
-                    self.reports.deactivate_schedule(int(schedule_id))
-                    st.rerun()
+            st.dataframe(
+                schedules,
+                use_container_width=True,
+                hide_index=True,
+            )

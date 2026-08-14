@@ -1,61 +1,49 @@
-HealthWellnessDashboard/
-│
-├── docs/
-│   ├── Design_Document.md
-│   ├── Developer_Guide.md
-│   ├── Deployment_Guide.md
-│   ├── CHANGELOG.md
-│   └── ROADMAP.md
-│
-├── src/
-│   │
-│   ├── app.py
-│   ├── config.py
-│   ├── requirements.txt
-│   │
-│   ├── assets/
-│   │     ├── css/
-│   │     ├── images/
-│   │     └── icons/
-│   │
-│   ├── database/
-│   │
-│   ├── models/
-│   │
-│   ├── repositories/
-│   │
-│   ├── services/
-│   │
-│   ├── reports/
-│   │
-│   ├── imports/
-│   │
-│   ├── utilities/
-│   │
-│   └── pages/
-│
-├── tests/
-│
-├── .gitignore
-│
-├── README.md
-│
-└── LICENSE
+# Health & Wellness Analytics Dashboard
 
+A compact Streamlit + SQLite analytics platform with:
 
-# Health & Wellness Analytics Dashboard — Phase 2
+- Administrator and client logins
+- Client onboarding
+- Exercise, Health, Mental Wellness, and Nutrition data entry
+- Monthly dashboard filtering
+- Client-specific dashboards
+- Trend charts and correlation analytics
+- Excel workbook import
+- PDF client reports and Excel administrator reports
+- Report schedule configuration
+- Sample data for demonstrations
 
-Phase 2 activates the four client data modules:
-
-- Exercise
-- Health
-- Mental Wellness
-- Nutrition
-
-## Run locally
-
-Create a virtual environment:
+## First run
 
 ```bash
 python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run src/app.py
+```
 
+The first launch creates an administrator account if none exists.
+
+Default development credentials:
+
+```text
+username: admin
+password: ChangeMe123!
+```
+
+For deployment, set environment variables instead:
+
+```bash
+export WELLNESS_ADMIN_USERNAME="admin"
+export WELLNESS_ADMIN_PASSWORD="your-strong-password"
+streamlit run src/app.py
+```
+
+## Sample data
+
+Use:
+
+`sample_data/HealthWellness_Demo_20Clients_6Months.xlsx`
+
+The importer resolves client records by email address, so the workbook can be
+used with a fresh or already-populated database.
