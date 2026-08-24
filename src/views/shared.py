@@ -18,7 +18,7 @@ class PageSupport:
             return
         st.dataframe(
             frame.drop(columns=["is_active"], errors="ignore"),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

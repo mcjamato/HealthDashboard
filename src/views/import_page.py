@@ -2,96 +2,197 @@ import streamlit as st
 
 
 class ImportPage:
-    """Administrator page for downloading and importing Excel workbooks."""
+    """Administrator import center for customer and blood-work data."""
+
+    CUSTOMER_ENTRIES = "Customer Entries"
+    BLOOD_WORK = "Blood Work"
 
     def __init__(
         self,
-        importer,
+        customer_importer,
+        blood_work_importer,
     ) -> None:
-        self.importer = importer
+        self.customer_importer = (
+            customer_importer
+        )
+        self.blood_work_importer = (
+            blood_work_importer
+        )
 
     def render(
         self,
         role: str,
     ) -> None:
-        st.title("📥 Excel Import")
+        st.title(
+            "📥 Data Import"
+        )
 
         if role != "admin":
             st.warning(
-                "Excel importing is available only to administrators."
+                "Data importing is available "
+                "only to administrators."
             )
             return
 
+        destination = st.selectbox(
+            "Import destination",
+            [
+                self.CUSTOMER_ENTRIES,
+                self.BLOOD_WORK,
+            ],
+            help=(
+                "Customer Entries imports client profiles "
+                "plus Exercise, Health, Mental Wellness, "
+                "and Nutrition data. Blood Work imports "
+                "laboratory results."
+            ),
+            width=360,
+        )
+
+        if destination == self.CUSTOMER_ENTRIES:
+            self._render_customer_import()
+        else:
+            self._render_blood_work_import()
+
+    def _render_customer_import(
+        self,
+    ) -> None:
+        st.subheader(
+            "Customer Entries"
+        )
+
         st.write(
-            "Use the workbook template to import clients and wellness data. "
-            "Client email addresses are used to match wellness records to the "
-            "correct client profile."
+            "Imports Clients, Exercise, Health, "
+            "MentalWellness, and Nutrition worksheets. "
+            "Client email is used to match each record "
+            "to the correct customer."
         )
 
         st.download_button(
-            label="Download workbook template",
-            data=self.importer.template_bytes(),
-            file_name="health_wellness_import_template.xlsx",
+            label="Download customer-entry template",
+            data=self.customer_importer.template_bytes(),
+            file_name=(
+                "health_wellness_customer_entries_template.xlsx"
+            ),
             mime=(
                 "application/vnd.openxmlformats-officedocument."
                 "spreadsheetml.sheet"
             ),
-            use_container_width=True,
+            width="content",
         )
 
         uploaded = st.file_uploader(
-            "Upload completed workbook",
+            "Upload customer-entry workbook",
             type=["xlsx"],
-            help=(
-                "The workbook must contain Clients, Exercise, Health, "
-                "MentalWellness, and Nutrition worksheets."
-            ),
+            key="customer_entry_import_file",
+            width="stretch",
         )
 
-        if uploaded is None:
-            return
-
-        if st.button(
-            "Import workbook",
-            use_container_width=True,
-            type="primary",
+        if (
+            uploaded is not None
+            and st.button(
+                "Import customer entries",
+                type="primary",
+                key="import_customer_entries",
+                width="content",
+            )
         ):
-            with st.spinner("Importing workbook..."):
-                result = self.importer.import_workbook(
-                    uploaded.getvalue()
-                )
-
-            if result.imported > 0:
-                st.success(
-                    f"Imported rows: {result.imported}"
-                )
-
-            if result.rejected > 0:
-                st.warning(
-                    f"Rejected rows: {result.rejected}"
-                )
-
-                with st.expander(
-                    "View rejected-row details",
-                    expanded=True,
-                ):
-                    for error in result.errors[:50]:
-                        st.error(error)
-
-            if (
-                result.imported == 0
-                and result.rejected == 0
+            with st.spinner(
+                "Importing customer entries..."
             ):
-                st.info(
-                    "The workbook did not contain any new rows to import."
+                result = (
+                    self.customer_importer
+                    .import_workbook(
+                        uploaded.getvalue()
+                    )
                 )
 
-            if (
-                result.imported > 0
-                and result.rejected == 0
+            self._show_result(
+                result
+            )
+
+    def _render_blood_work_import(
+        self,
+    ) -> None:
+        st.subheader(
+            "Blood Work"
+        )
+
+        st.write(
+            "Import laboratory results using a flexible "
+            "test-name/value structure. Example tests "
+            "include glucose, A1C, LDL, HDL, hemoglobin, "
+            "vitamin D, and many others."
+        )
+
+        st.download_button(
+            label="Download blood-work template",
+            data=self.blood_work_importer.template_bytes(),
+            file_name="blood_work_import_template.xlsx",
+            mime=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+            width="content",
+        )
+
+        uploaded = st.file_uploader(
+            "Upload blood-work workbook",
+            type=["xlsx"],
+            key="blood_work_import_file",
+            width="stretch",
+        )
+
+        if (
+            uploaded is not None
+            and st.button(
+                "Import blood work",
+                type="primary",
+                key="import_blood_work",
+                width="content",
+            )
+        ):
+            with st.spinner(
+                "Importing blood work..."
             ):
-                st.success(
-                    "Import completed successfully. "
-                    "Refreshing the application..."
+                result = (
+                    self.blood_work_importer
+                    .import_workbook(
+                        uploaded.getvalue()
+                    )
                 )
-                st.rerun()
+
+            self._show_result(
+                result
+            )
+
+    @staticmethod
+    def _show_result(
+        result,
+    ) -> None:
+        if result.imported > 0:
+            st.success(
+                f"Imported rows: {result.imported}"
+            )
+
+        if result.rejected > 0:
+            st.warning(
+                f"Rejected rows: {result.rejected}"
+            )
+
+            with st.expander(
+                "Rejected-row details",
+                expanded=True,
+            ):
+                for error in result.errors[:50]:
+                    st.error(
+                        error
+                    )
+
+        if (
+            result.imported == 0
+            and result.rejected == 0
+        ):
+            st.info(
+                "No new rows were imported."
+            )

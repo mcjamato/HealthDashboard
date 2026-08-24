@@ -27,7 +27,7 @@ class HealthPage:
             water = st.number_input("Water (liters)", 0.0, 20.0, 0.0, step=0.25)
             notes = st.text_area("Notes")
             submitted = st.form_submit_button(
-                "Save health record", use_container_width=True
+                "Save health record", width="stretch"
             )
 
         if submitted:

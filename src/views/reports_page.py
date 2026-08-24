@@ -60,7 +60,7 @@ class ReportsPage:
             pdf_bytes,
             f"{name.replace(' ', '_')}_wellness_report.pdf",
             "application/pdf",
-            use_container_width=True,
+            width="stretch",
         )
 
         if role == "admin":
@@ -72,7 +72,7 @@ class ReportsPage:
                 excel_bytes,
                 f"{name.replace(' ', '_')}_wellness_report.xlsx",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
+                width="stretch",
             )
 
             st.subheader("Schedule a report")
@@ -111,6 +111,6 @@ class ReportsPage:
             schedules = self.reports.list_active_schedules()
             st.dataframe(
                 schedules,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )

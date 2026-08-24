@@ -47,27 +47,3 @@ Use:
 
 The importer resolves client records by email address, so the workbook can be
 used with a fresh or already-populated database.
-
-
-## Version 1.3.0 features
-
-- CSV export under dashboard graphs
-- PNG graph export from each Plotly chart's camera icon
-- Customer Entries / Blood Work Data Import selector
-- Blood-work tracking
-- Administrator and client password changes
-- Optional nutrition food-photo analysis
-
-### Streamlit Community Cloud - Food Photo Analyzer
-
-In Streamlit Cloud, open your app's **Settings -> Secrets** and add:
-
-```toml
-OPENAI_API_KEY = "your-api-key"
-OPENAI_VISION_MODEL = "gpt-5.6-luna"
-```
-
-Do not commit real API keys to GitHub.
-
-The application still runs without an OpenAI key; only the Food Photo Analyzer
-is disabled.

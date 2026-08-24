@@ -24,7 +24,7 @@ class MentalWellnessPage:
             meditation = st.number_input("Meditation (minutes)", 0, 600, 0)
             journal = st.text_area("Journal entry")
             submitted = st.form_submit_button(
-                "Save wellness record", use_container_width=True
+                "Save wellness record", width="stretch"
             )
 
         if submitted:

@@ -1,68 +1,34 @@
 # Changelog
 
-All notable changes to the Health & Wellness Analytics Dashboard will be recorded here.
-
-## [1.2.1] - Client Import Workflow
+## [1.3.0] - Export, Blood Work, Food Vision, and Password Management
 
 ### Added
-- Formal project changelog.
-- Demonstration workbook containing 20 clients and six months of wellness data.
-- Automatic application refresh after a successful Excel import.
+- CSV download for dashboard and analytics charts.
+- PNG graph download through the Plotly camera icon on every exportable chart.
+- Data Import destination selector with Customer Entries and Blood Work options.
+- Flexible blood-work database table, importer, manual entry, history, and trend chart.
+- Nutrition Food Photo Analyzer using camera or image upload when an OpenAI API secret is configured.
+- Self-service password change for administrators and clients.
+- Administrator password-reset controls for active accounts.
+- Streamlit Cloud secrets example for the optional food-photo analyzer.
 
-### Improved
-- Excel imports identify clients by email instead of hard-coded SQLite client IDs.
-- Existing clients are matched by email and are not duplicated during repeat imports.
-- Exercise, Health, Mental Wellness, and Nutrition rows resolve the correct database client ID automatically.
-- Import errors are reported row by row without preventing valid rows from loading.
+### Changed
+- Excel Import navigation is now named Data Import.
+- Chart rendering is centralized in reusable exportable-chart components.
+- Application version updated to 1.3.0.
 
-### Import Workbook
-The supported workbook contains five worksheets:
+### Notes
+- Food-photo nutrition values are estimates and are labeled accordingly.
+- The Plotly camera icon performs PNG export in the user's browser, avoiding a server-side browser dependency on Streamlit Community Cloud.
 
-- Clients
-- Exercise
-- Health
-- MentalWellness
-- Nutrition
+## [1.2.2] - Streamlit Compatibility Cleanup
 
-The four wellness worksheets use `client_email` as the external client identifier.
+### Changed
+- Replaced deprecated `use_container_width=True` with `width="stretch"` throughout the application.
+- Replaced deprecated `use_container_width=False` with `width="content"` where applicable.
+- Updated the displayed application version to 1.2.2.
 
-## [1.2.0] - Consolidated Application
+### Validation
+- All Python files passed syntax compilation.
+- No remaining `use_container_width` references remain in `src/`.
 
-### Added
-- Complete consolidated application baseline.
-- Administrator and client authentication.
-- bcrypt password hashing.
-- Client-specific role restrictions.
-- Grouped navigation.
-- Main analytics dashboard.
-- Customer domain dashboards.
-- Monthly chart filters.
-- KPI cards and interactive Plotly charts.
-- Cross-domain Pearson correlation analysis.
-- Excel workbook import.
-- PDF client reports.
-- Excel administrator reports.
-- Report schedule configuration.
-- Final acceptance-test page.
-- Twenty-client six-month demonstration dataset.
-
-## [1.1.0] - Dashboard UI Polish
-
-### Added
-- Client summary header.
-- Improved dashboard KPI presentation.
-- Reusable dashboard layout components.
-- Compact month filter.
-- Responsive dashboard layout.
-
-## [1.0.0] - MVP
-
-### Added
-- Client onboarding.
-- Exercise tracking.
-- Health tracking.
-- Mental Wellness tracking.
-- Nutrition tracking.
-- SQLite persistence.
-- Administrator/client role model.
-- Basic analytics and reporting.

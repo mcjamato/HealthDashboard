@@ -26,7 +26,7 @@ class ClientsPage:
                 max_value=date.today(),
             )
             submitted = st.form_submit_button(
-                "Create client", use_container_width=True
+                "Create client", width="stretch"
             )
 
         if submitted:
@@ -47,4 +47,4 @@ class ClientsPage:
 
         frame = self.repository.list_active()
         st.subheader("Active clients")
-        st.dataframe(frame, use_container_width=True, hide_index=True)
+        st.dataframe(frame, width="stretch", hide_index=True)

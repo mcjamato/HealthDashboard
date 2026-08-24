@@ -35,7 +35,7 @@ class ExercisePage:
             )
             notes = st.text_area("Notes")
             submitted = st.form_submit_button(
-                "Save exercise record", use_container_width=True
+                "Save exercise record", width="stretch"
             )
 
         if submitted:

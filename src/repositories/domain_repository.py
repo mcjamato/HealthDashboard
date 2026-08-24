@@ -82,3 +82,17 @@ class NutritionRepository(DomainRepository):
         "client_id", "recorded_on", "meal_type", "calories",
         "protein_g", "carbs_g", "fat_g", "fiber_g", "water_liters", "notes",
     )
+
+
+class BloodWorkRepository(DomainRepository):
+    table_name = "blood_work_records"
+    columns = (
+        "client_id",
+        "recorded_on",
+        "test_name",
+        "value",
+        "unit",
+        "reference_low",
+        "reference_high",
+        "notes",
+    )

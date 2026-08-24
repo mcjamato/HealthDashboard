@@ -1,0 +1,11 @@
+git status
+
+git add .
+
+git commit -m "v1.3.0 Add exports blood work food vision and password management"
+
+git push
+
+git tag -a v1.3.0 -m "Exports blood work food vision and password management"
+
+git push origin v1.3.0

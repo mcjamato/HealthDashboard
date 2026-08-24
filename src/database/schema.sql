@@ -104,3 +104,22 @@ CREATE INDEX IF NOT EXISTS idx_exercise_client_date ON exercise_records(client_i
 CREATE INDEX IF NOT EXISTS idx_health_client_date ON health_records(client_id, recorded_on);
 CREATE INDEX IF NOT EXISTS idx_mental_client_date ON mental_wellness_records(client_id, recorded_on);
 CREATE INDEX IF NOT EXISTS idx_nutrition_client_date ON nutrition_records(client_id, recorded_on);
+
+
+CREATE TABLE IF NOT EXISTS blood_work_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER NOT NULL,
+    recorded_on TEXT NOT NULL,
+    test_name TEXT NOT NULL,
+    value REAL NOT NULL,
+    unit TEXT,
+    reference_low REAL,
+    reference_high REAL,
+    notes TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(client_id) REFERENCES clients(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_blood_work_client_date
+ON blood_work_records(client_id, recorded_on);
