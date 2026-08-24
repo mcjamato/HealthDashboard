@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.1] - Client Role Navigation
+
+### Added
+- Dedicated role-based navigation configuration.
+- Client-only menu containing Customer Dashboards and Customer Data entry pages.
+- Secondary authorization check before page routing.
+
+### Changed
+- Client accounts no longer see the Analyze section.
+- Client accounts no longer see Client Profiles, User Accounts, Data Import, or Final Testing.
+- Client accounts remain permanently linked to their own client ID and cannot select another customer.
+- Client navigation includes Exercise, Health, Mental Wellness, Nutrition, Blood Work, and Change Password.
+- Administrator navigation remains unchanged.
+- Application version updated to 1.3.1.
+
+### Security
+- Page visibility and page authorization are both enforced from the authenticated role.
+- A client account must have a valid linked client_id before its data can be displayed.
+
 ## [1.3.0] - Export, Blood Work, Food Vision, and Password Management
 
 ### Added

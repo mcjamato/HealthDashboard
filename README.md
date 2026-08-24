@@ -71,3 +71,14 @@ Do not commit real API keys to GitHub.
 
 The application still runs without an OpenAI key; only the Food Photo Analyzer
 is disabled.
+
+
+## Client login experience
+
+Client logins are created by an administrator under:
+
+`Customer Data -> User Accounts`
+
+Each client login is linked to one client profile. After login, the client sees
+only Customer Dashboards and the wellness data-entry pages required for their
+own account. Clients cannot select or view another customer.

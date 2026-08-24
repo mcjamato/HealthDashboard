@@ -1,0 +1,11 @@
+git status
+
+git add .
+
+git commit -m "v1.3.1 Add dedicated client role navigation"
+
+git push
+
+git tag -a v1.3.1 -m "Dedicated client role navigation"
+
+git push origin v1.3.1

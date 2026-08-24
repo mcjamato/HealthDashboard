@@ -5,6 +5,7 @@ import streamlit as st
 
 from auth.auth_service import AuthService
 from auth.session_manager import SessionManager
+from components.navigation import RoleNavigation
 from config import (
     APP_ICON,
     APP_VERSION,
@@ -67,7 +68,6 @@ database = DatabaseManager(
         / "schema.sql"
     ),
 )
-
 database.initialize()
 
 clients = ClientRepository(
@@ -99,18 +99,15 @@ auth_service = AuthService(
     users
 )
 
-created = (
-    auth_service
-    .ensure_initial_admin(
-        username=os.getenv(
-            "WELLNESS_ADMIN_USERNAME",
-            "admin",
-        ),
-        password=os.getenv(
-            "WELLNESS_ADMIN_PASSWORD",
-            "ChangeMe123!",
-        ),
-    )
+created = auth_service.ensure_initial_admin(
+    username=os.getenv(
+        "WELLNESS_ADMIN_USERNAME",
+        "admin",
+    ),
+    password=os.getenv(
+        "WELLNESS_ADMIN_PASSWORD",
+        "ChangeMe123!",
+    ),
 )
 
 if not SessionManager.is_authenticated():
@@ -126,9 +123,7 @@ if not SessionManager.is_authenticated():
 
     st.stop()
 
-current_user = (
-    SessionManager.current_user()
-)
+current_user = SessionManager.current_user()
 
 if current_user is None:
     SessionManager.logout()
@@ -152,13 +147,11 @@ analytics = AnalyticsPage(
     nutrition,
 )
 
-customer_dashboards = (
-    CustomerDashboardPage(
-        exercise,
-        health,
-        mental,
-        nutrition,
-    )
+customer_dashboards = CustomerDashboardPage(
+    exercise,
+    health,
+    mental,
+    nutrition,
 )
 
 customer_importer = ExcelImporter(
@@ -169,11 +162,9 @@ customer_importer = ExcelImporter(
     nutrition,
 )
 
-blood_work_importer = (
-    BloodWorkImporter(
-        clients,
-        blood_work,
-    )
+blood_work_importer = BloodWorkImporter(
+    clients,
+    blood_work,
 )
 
 reports = ReportsPage(
@@ -185,45 +176,19 @@ reports = ReportsPage(
     report_repository,
 )
 
-user_management = (
-    UserManagementView(
-        users,
-        clients,
-        auth_service,
-    )
+user_management = UserManagementView(
+    users,
+    clients,
+    auth_service,
 )
 
-change_password = (
-    ChangePasswordView(
-        auth_service
-    )
+change_password = ChangePasswordView(
+    auth_service
 )
 
-NAVIGATION = {
-    "Analyze": [
-        "Dashboard",
-        "Cross-Domain Analytics",
-        "Reports",
-    ],
-    "Customer Dashboards": [
-        "Exercise Dashboard",
-        "Health Dashboard",
-        "Mental Wellness Dashboard",
-        "Nutrition Dashboard",
-    ],
-    "Customer Data": [
-        "Client Profiles",
-        "User Accounts",
-        "Exercise Entry",
-        "Health Entry",
-        "Mental Wellness Entry",
-        "Nutrition Entry",
-        "Blood Work",
-        "Data Import",
-        "Change Password",
-        "Final Testing",
-    ],
-}
+navigation = RoleNavigation.for_role(
+    role
+)
 
 with st.sidebar:
     st.title(
@@ -235,44 +200,34 @@ with st.sidebar:
         f"v{APP_VERSION}"
     )
 
+    role_label = (
+        "Administrator"
+        if role == "admin"
+        else "Client"
+    )
+
     st.caption(
         f"Signed in as "
-        f"{current_user['username']}"
+        f"{current_user['username']} "
+        f"· {role_label}"
     )
 
     category = st.selectbox(
         "Section",
         list(
-            NAVIGATION.keys()
+            navigation.keys()
         ),
         key="navigation_category",
     )
 
-    page_options = list(
-        NAVIGATION[
-            category
-        ]
-    )
-
-    if role == "client":
-        disallowed = {
-            "Client Profiles",
-            "User Accounts",
-            "Data Import",
-            "Final Testing",
-        }
-
-        page_options = [
-            item
-            for item in page_options
-            if item not in disallowed
-        ]
-
     page = st.radio(
         "Page",
-        page_options,
+        navigation[
+            category
+        ],
         key=(
             f"navigation_page_"
+            f"{role}_"
             f"{category}"
         ),
     )
@@ -283,39 +238,56 @@ with st.sidebar:
         "### Customer context"
     )
 
-    client_frame = (
-        clients.list_active()
-    )
+    client_frame = clients.list_active()
 
     client_id = None
     client_context = None
 
     if role == "client":
+        # Client accounts are permanently tied to their own client_id.
+        # No customer selector is rendered for client users.
         client_id = current_user[
             "client_id"
         ]
 
-        if (
-            client_id is not None
-            and not client_frame.empty
-        ):
+        if client_id is None:
+            st.error(
+                "This client login is not linked "
+                "to a client profile. "
+                "Contact the administrator."
+            )
+        elif client_frame.empty:
+            st.error(
+                "The linked client profile is not available."
+            )
+        else:
             match = client_frame[
                 client_frame["id"]
                 == client_id
             ]
 
-            if not match.empty:
-                client_context = (
-                    ClientContext.from_row(
-                        match.iloc[
-                            0
-                        ].to_dict()
-                    )
+            if match.empty:
+                st.error(
+                    "The linked client profile is inactive "
+                    "or no longer available. "
+                    "Contact the administrator."
+                )
+            else:
+                client_context = ClientContext.from_row(
+                    match.iloc[
+                        0
+                    ].to_dict()
+                )
+
+                st.success(
+                    client_context[
+                        "full_name"
+                    ]
                 )
 
                 st.caption(
-                    f"Viewing "
-                    f"{client_context['full_name']}"
+                    "You can enter new wellness data "
+                    "and view your own progress dashboards."
                 )
 
     else:
@@ -353,12 +325,10 @@ with st.sidebar:
             ]
 
             if not match.empty:
-                client_context = (
-                    ClientContext.from_row(
-                        match.iloc[
-                            0
-                        ].to_dict()
-                    )
+                client_context = ClientContext.from_row(
+                    match.iloc[
+                        0
+                    ].to_dict()
                 )
 
     st.divider()
@@ -369,6 +339,20 @@ with st.sidebar:
     ):
         SessionManager.logout()
         st.rerun()
+
+
+# A second authorization check protects against a stale or manipulated
+# Streamlit session navigating to a page outside the role menu.
+if not RoleNavigation.is_allowed(
+    role,
+    page,
+):
+    st.error(
+        "You do not have permission "
+        "to access this page."
+    )
+    st.stop()
+
 
 if page == "Dashboard":
     dashboard.render(
