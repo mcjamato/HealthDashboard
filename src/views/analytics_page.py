@@ -78,7 +78,7 @@ class AnalyticsPage:
                     MonthFilter.select_months(
                         daily,
                         key_prefix=(
-                            "correlation_analysis"
+                            f"correlation_analysis_{client_id}"
                         ),
                         label="Months",
                     )

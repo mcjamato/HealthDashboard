@@ -109,3 +109,16 @@ Repository cleanup for macOS, GitHub Desktop, and Streamlit Cloud.
 - Python cache and virtual-environment files are ignored.
 - The application ignores only its runtime SQLite database: `health_dashboard.db`.
 - Demo/sample assets remain trackable in GitHub.
+
+
+## Version 1.6.0
+
+Version 1.6.0 adds the full 13-section Wellness Intake Questionnaire to client onboarding. Administrators can create clients manually using the questionnaire or import client/intake data from Excel or CSV. The main administrator dashboard can expand the selected client's complete intake profile.
+
+The included demo workbook contains 10 fictional clients and daily data from September 2025 through August 2026. The dashboard automatically uses the newest available month on first render, so August 2026 opens without requiring the user to select a month first.
+
+Sample files are in `sample_data/`:
+- `HealthWellness_Demo_10Clients_12Months_v1.6.0.xlsx`
+- `Wellness_Intake_Import_Template_v1.6.0.xlsx`
+- `Wellness_Intake_Import_Template_v1.6.0.csv`
+- `Wellness_Intake_10Clients_v1.6.0.csv`

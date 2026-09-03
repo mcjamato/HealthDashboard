@@ -7,246 +7,87 @@ import streamlit as st
 
 
 class MonthFilter:
-    """Reusable month filtering with a compact checkbox popover."""
+    """Reusable month filtering with a latest-month default."""
 
     @staticmethod
-    def prepare(
-        frame: pd.DataFrame,
-    ) -> pd.DataFrame:
+    def prepare(frame: pd.DataFrame) -> pd.DataFrame:
         if frame.empty:
             return frame.copy()
-
         if "recorded_on" not in frame.columns:
-            raise ValueError(
-                "MonthFilter requires a 'recorded_on' column."
-            )
-
+            raise ValueError("MonthFilter requires a 'recorded_on' column.")
         prepared = frame.copy()
-
-        prepared["recorded_on"] = pd.to_datetime(
-            prepared["recorded_on"],
-            errors="coerce",
-        )
-
-        return prepared.dropna(
-            subset=["recorded_on"]
-        )
+        prepared["recorded_on"] = pd.to_datetime(prepared["recorded_on"], errors="coerce")
+        return prepared.dropna(subset=["recorded_on"])
 
     @staticmethod
-    def available_months(
-        frame: pd.DataFrame,
-    ) -> list[str]:
-        prepared = MonthFilter.prepare(
-            frame
-        )
-
+    def available_months(frame: pd.DataFrame) -> list[str]:
+        prepared = MonthFilter.prepare(frame)
         if prepared.empty:
             return []
-
-        periods = (
-            prepared["recorded_on"]
-            .dt.to_period("M")
-            .dropna()
-            .unique()
-        )
-
-        return [
-            period.strftime("%B %Y")
-            for period in sorted(
-                periods,
-                reverse=True,
-            )
-        ]
+        periods = prepared["recorded_on"].dt.to_period("M").dropna().unique()
+        return [period.strftime("%B %Y") for period in sorted(periods, reverse=True)]
 
     @staticmethod
-    def _checkbox_key(
-        key_prefix: str,
-        month: str,
-    ) -> str:
-        return (
-            f"{key_prefix}_month_"
-            f"{month.replace(' ', '_')}"
-        )
+    def _checkbox_key(key_prefix: str, month: str) -> str:
+        return f"{key_prefix}_month_{month.replace(' ', '_')}"
 
     @staticmethod
-    def select_months(
-        frame: pd.DataFrame,
-        key_prefix: str,
-        label: str = "Months",
-    ) -> list[str]:
-        """
-        Show available months inside a dropdown-style popover.
-
-        The newest available month is selected automatically on first use.
-        Users can check additional months to analyze multiple months.
-        """
-
-        months = MonthFilter.available_months(
-            frame
-        )
-
+    def select_months(frame: pd.DataFrame, key_prefix: str, label: str = "Months") -> list[str]:
+        months = MonthFilter.available_months(frame)
         if not months:
-            st.caption(
-                "No dated records are available."
-            )
+            st.caption("No dated records are available.")
             return []
 
         newest = months[0]
+        initialized_key = f"{key_prefix}_months_initialized"
 
-        # Seed the latest month before the widgets are rendered.
-        initialized_key = (
-            f"{key_prefix}_months_initialized"
-        )
-
-        if not st.session_state.get(
-            initialized_key,
-            False,
-        ):
+        # Initialize state BEFORE any checkbox widget exists. This prevents the
+        # Streamlit session-state error that could occur on the first login/render.
+        if initialized_key not in st.session_state:
+            st.session_state[initialized_key] = True
             for month in months:
-                st.session_state[
-                    MonthFilter._checkbox_key(
-                        key_prefix,
-                        month,
-                    )
-                ] = (
-                    month == newest
-                )
-
-            st.session_state[
-                initialized_key
-            ] = True
-
-        currently_selected = [
-            month
-            for month in months
-            if st.session_state.get(
-                MonthFilter._checkbox_key(
-                    key_prefix,
-                    month,
-                ),
-                False,
-            )
-        ]
-
-        button_label = (
-            currently_selected[0]
-            if len(currently_selected) == 1
-            else (
-                f"{len(currently_selected)} months selected"
-                if currently_selected
-                else label
-            )
-        )
-
-        with st.popover(
-            button_label,
-            width="content",
-        ):
-            st.markdown(
-                f"**{label} to analyze**"
-            )
-
-            st.caption(
-                "The latest month is selected by default. "
-                "Check additional months to extend the analysis."
-            )
-
-            selected: list[str] = []
-
+                st.session_state[MonthFilter._checkbox_key(key_prefix, month)] = (month == newest)
+        else:
+            # New months may appear after an import. Seed missing checkbox keys safely.
             for month in months:
-                key = MonthFilter._checkbox_key(
-                    key_prefix,
-                    month,
-                )
+                key = MonthFilter._checkbox_key(key_prefix, month)
+                if key not in st.session_state:
+                    st.session_state[key] = False
 
-                if st.checkbox(
-                    month,
-                    key=key,
-                ):
-                    selected.append(
-                        month
-                    )
-
-        # Read the state again after the popover renders.
-        selected = [
-            month
-            for month in months
-            if st.session_state.get(
-                MonthFilter._checkbox_key(
-                    key_prefix,
-                    month,
-                ),
-                False,
-            )
+        current = [
+            month for month in months
+            if bool(st.session_state.get(MonthFilter._checkbox_key(key_prefix, month), False))
         ]
+        if not current:
+            # Do not mutate a widget-backed state key after rendering. Use newest
+            # as the effective range for this render; next interaction can check it.
+            current = [newest]
 
-        if not selected:
-            newest_key = (
-                MonthFilter._checkbox_key(
-                    key_prefix,
-                    newest,
-                )
-            )
+        button_label = current[0] if len(current) == 1 else f"{len(current)} months selected"
+        selected = []
+        with st.popover(button_label, width="content"):
+            st.markdown(f"**{label} to analyze**")
+            st.caption("The newest available month is selected automatically. Check more months to compare longer trends.")
+            for month in months:
+                key = MonthFilter._checkbox_key(key_prefix, month)
+                if st.checkbox(month, key=key):
+                    selected.append(month)
 
-            st.session_state[
-                newest_key
-            ] = True
-
-            selected = [
-                newest
-            ]
-
-            st.warning(
-                "At least one month must remain selected. "
-                f"{newest} has been restored."
-            )
-
-        return selected
+        return selected or [newest]
 
     @staticmethod
-    def filter(
-        frame: pd.DataFrame,
-        selected_months: Sequence[str],
-    ) -> pd.DataFrame:
-        prepared = MonthFilter.prepare(
-            frame
-        )
-
+    def filter(frame: pd.DataFrame, selected_months: Sequence[str]) -> pd.DataFrame:
+        prepared = MonthFilter.prepare(frame)
         if prepared.empty:
             return prepared
-
         if not selected_months:
-            return prepared.iloc[
-                0:0
-            ].copy()
-
-        labels = (
-            prepared["recorded_on"]
-            .dt.strftime("%B %Y")
-        )
-
-        return prepared[
-            labels.isin(
-                list(
-                    selected_months
-                )
-            )
-        ].copy()
+            selected_months = MonthFilter.available_months(prepared)[:1]
+        labels = prepared["recorded_on"].dt.strftime("%B %Y")
+        return prepared[labels.isin(list(selected_months))].copy()
 
     @staticmethod
-    def selection_caption(
-        selected_months: Sequence[str],
-    ) -> str:
-        months = list(
-            selected_months
-        )
-
+    def selection_caption(selected_months: Sequence[str]) -> str:
+        months = list(selected_months)
         if not months:
-            return "No months selected"
-
-        if len(months) == 1:
-            return months[0]
-
-        return ", ".join(
-            months
-        )
+            return "Latest month"
+        return months[0] if len(months) == 1 else ", ".join(months)

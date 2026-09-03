@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from configuration.intake_fields import INTAKE_SECTIONS
+
 from components.layout import DashboardLayout
 from services.analytics_service import AnalyticsService
 from utilities.month_filter import MonthFilter
@@ -160,49 +162,40 @@ class DashboardPage:
                 "View full client intake information",
                 expanded=False,
             ):
-                left, right = st.columns(
-                    2
+                st.markdown("### Client identity")
+                identity = {
+                    "Client ID": client_details.get("id"),
+                    "First name": client_details.get("first_name"),
+                    "Last name": client_details.get("last_name"),
+                    "Email": client_details.get("email"),
+                    "Birth date": client_details.get("birth_date"),
+                    "Age": client.get("age") if client else None,
+                    "Created": client_details.get("created_at"),
+                }
+                st.dataframe(
+                    pd.DataFrame(
+                        [{"Field": key, "Value": value if value not in (None, "") else "Not provided"} for key, value in identity.items()]
+                    ),
+                    width="stretch",
+                    hide_index=True,
                 )
 
-                with left:
-                    st.markdown(
-                        f"**Client ID:** "
-                        f"{client_details.get('id', 'Not available')}"
-                    )
-                    st.markdown(
-                        f"**First name:** "
-                        f"{client_details.get('first_name', 'Not available')}"
-                    )
-                    st.markdown(
-                        f"**Last name:** "
-                        f"{client_details.get('last_name', 'Not available')}"
-                    )
-                    st.markdown(
-                        f"**Email:** "
-                        f"{client_details.get('email', 'Not provided')}"
-                    )
-
-                with right:
-                    st.markdown(
-                        f"**Birth date:** "
-                        f"{client_details.get('birth_date', 'Not provided')}"
-                    )
-                    st.markdown(
-                        f"**Age:** "
-                        f"{client.get('age', 'Not available') if client else 'Not available'}"
-                    )
-                    st.markdown(
-                        f"**Created:** "
-                        f"{client_details.get('created_at', 'Not available')}"
-                    )
-                    st.markdown(
-                        "**Status:** Active"
-                    )
-
-                st.caption(
-                    "This section displays all intake fields "
-                    "currently stored in the client profile."
-                )
+                intake = client_details.get("intake_profile") or {}
+                if not intake:
+                    st.info("No intake questionnaire has been saved for this client yet.")
+                else:
+                    for section, fields in INTAKE_SECTIONS:
+                        st.markdown(f"#### {section}")
+                        rows = []
+                        for field in fields:
+                            value = intake.get(field["key"])
+                            if field["type"] == "checkbox":
+                                value = "Yes" if bool(value) else "No"
+                            rows.append({
+                                "Field": field["label"],
+                                "Value": value if value not in (None, "") else "Not provided",
+                            })
+                        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
         samples = self._samples()
 

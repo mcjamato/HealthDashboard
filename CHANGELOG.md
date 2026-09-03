@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.6.0] - Full Intake Onboarding and 12-Month Demo Data
+
+### Added
+- Full Wellness Intake Questionnaire data model based on the supplied 13-section intake form.
+- New `client_intake_profiles` SQLite table linked one-to-one with `clients`.
+- Shared intake field definitions used by manual client creation and imports.
+- Administrator manual client onboarding with all questionnaire fields and original questionnaire options.
+- Excel intake + wellness import template.
+- CSV intake-only import template and CSV intake import support.
+- Administrator dashboard expander showing the selected client's complete saved intake questionnaire.
+- New synthetic demo workbook with 10 clients and 12 months of Exercise, Health, Mental Wellness, and Nutrition data.
+- 10-client intake-only sample CSV.
+
+### Changed
+- Customer import now includes the full intake profile in the `Clients` worksheet.
+- Dashboard month state is scoped per client to avoid stale selections when switching clients.
+- Latest available month is used automatically when the month control has not yet been interacted with.
+- Month selection no longer mutates a checkbox-backed Streamlit session-state key after widget creation, preventing the first-login month error.
+- Removed the older 20-client / 6-month demo workbook from the v1.6.0 release package.
+- Application version updated to 1.6.0.
+
+### Demo Data
+- Date range: September 1, 2025 through August 31, 2026.
+- Clients: 10 fictional profiles.
+- Wellness records: 14,600 total across the four core domains.
+- Import smoke test: 14,610 rows imported, 0 rejected (10 intake/client rows + 14,600 wellness rows).
+
 ## [1.5.1] - macOS and Git Repository Cleanup
 
 ### Changed

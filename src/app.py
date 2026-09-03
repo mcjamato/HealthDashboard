@@ -16,6 +16,7 @@ from database.database import DatabaseManager
 from imports.blood_work_importer import BloodWorkImporter
 from imports.excel_importer import ExcelImporter
 from repositories.client_repository import ClientRepository
+from repositories.client_intake_repository import ClientIntakeRepository
 from repositories.domain_repository import (
     BloodWorkRepository,
     ExerciseRepository,
@@ -71,6 +72,9 @@ database = DatabaseManager(
 database.initialize()
 
 clients = ClientRepository(
+    database
+)
+client_intake = ClientIntakeRepository(
     database
 )
 users = UserRepository(
@@ -156,6 +160,7 @@ customer_dashboards = CustomerDashboardPage(
 
 customer_importer = ExcelImporter(
     clients,
+    client_intake,
     exercise,
     health,
     mental,
@@ -277,6 +282,9 @@ with st.sidebar:
                 client_details = match.iloc[
                     0
                 ].to_dict()
+                client_details["intake_profile"] = client_intake.get_for_client(
+                    int(client_details["id"])
+                )
 
                 client_context = ClientContext.from_row(
                     client_details
@@ -331,6 +339,9 @@ with st.sidebar:
                 client_details = match.iloc[
                     0
                 ].to_dict()
+                client_details["intake_profile"] = client_intake.get_for_client(
+                    int(client_details["id"])
+                )
 
                 client_context = ClientContext.from_row(
                     client_details
@@ -408,7 +419,8 @@ elif page == "Nutrition Dashboard":
 
 elif page == "Client Profiles":
     ClientsPage(
-        clients
+        clients,
+        client_intake,
     ).render(
         role
     )
