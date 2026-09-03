@@ -6,7 +6,12 @@ from database.database import DatabaseManager
 
 
 class ClientRepository:
-    def __init__(self, db: DatabaseManager) -> None:
+    """SQLite repository for client intake/profile information."""
+
+    def __init__(
+        self,
+        db: DatabaseManager,
+    ) -> None:
         self.db = db
 
     def create(
@@ -19,46 +24,126 @@ class ClientRepository:
         with self.db.connection() as connection:
             cursor = connection.execute(
                 '''
-                INSERT INTO clients(first_name, last_name, email, birth_date)
+                INSERT INTO clients(
+                    first_name,
+                    last_name,
+                    email,
+                    birth_date
+                )
                 VALUES (?, ?, ?, ?)
                 ''',
                 (
                     first_name.strip(),
                     last_name.strip(),
-                    email.strip().lower() or None,
+                    email.strip().lower()
+                    or None,
                     birth_date,
                 ),
             )
-            return int(cursor.lastrowid)
 
-    def get_by_email(self, email: str) -> dict | None:
+            return int(
+                cursor.lastrowid
+            )
+
+    def get_by_id(
+        self,
+        client_id: int,
+    ) -> dict | None:
         with self.db.connection() as connection:
             row = connection.execute(
                 '''
-                SELECT id, first_name, last_name, email, birth_date, active, created_at
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    birth_date,
+                    active,
+                    created_at
+                FROM clients
+                WHERE id = ?
+                LIMIT 1
+                ''',
+                (
+                    client_id,
+                ),
+            ).fetchone()
+
+        return (
+            dict(
+                row
+            )
+            if row
+            else None
+        )
+
+    def get_by_email(
+        self,
+        email: str,
+    ) -> dict | None:
+        with self.db.connection() as connection:
+            row = connection.execute(
+                '''
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    birth_date,
+                    active,
+                    created_at
                 FROM clients
                 WHERE lower(email) = lower(?)
                 LIMIT 1
                 ''',
-                (email.strip(),),
+                (
+                    email.strip(),
+                ),
             ).fetchone()
-        return dict(row) if row else None
 
-    def list_active(self) -> pd.DataFrame:
+        return (
+            dict(
+                row
+            )
+            if row
+            else None
+        )
+
+    def list_active(
+        self,
+    ) -> pd.DataFrame:
         with self.db.connection() as connection:
             return pd.read_sql_query(
                 '''
-                SELECT id, first_name, last_name, email, birth_date, created_at
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    birth_date,
+                    active,
+                    created_at
                 FROM clients
                 WHERE active = 1
-                ORDER BY last_name, first_name
+                ORDER BY
+                    last_name,
+                    first_name
                 ''',
                 connection,
             )
 
-    def deactivate(self, client_id: int) -> None:
+    def deactivate(
+        self,
+        client_id: int,
+    ) -> None:
         with self.db.connection() as connection:
             connection.execute(
-                "UPDATE clients SET active = 0 WHERE id = ?",
-                (client_id,),
+                '''
+                UPDATE clients
+                SET active = 0
+                WHERE id = ?
+                ''',
+                (
+                    client_id,
+                ),
             )

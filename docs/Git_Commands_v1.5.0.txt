@@ -1,0 +1,11 @@
+git status
+
+git add .
+
+git commit -m "v1.5.0 Improve month filters intake details and correlation analysis"
+
+git push
+
+git tag -a v1.5.0 -m "Month filters intake details and correlation analysis"
+
+git push origin v1.5.0

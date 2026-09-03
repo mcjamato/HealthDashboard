@@ -242,6 +242,7 @@ with st.sidebar:
 
     client_id = None
     client_context = None
+    client_details = None
 
     if role == "client":
         # Client accounts are permanently tied to their own client_id.
@@ -273,10 +274,12 @@ with st.sidebar:
                     "Contact the administrator."
                 )
             else:
+                client_details = match.iloc[
+                    0
+                ].to_dict()
+
                 client_context = ClientContext.from_row(
-                    match.iloc[
-                        0
-                    ].to_dict()
+                    client_details
                 )
 
                 st.success(
@@ -325,10 +328,12 @@ with st.sidebar:
             ]
 
             if not match.empty:
+                client_details = match.iloc[
+                    0
+                ].to_dict()
+
                 client_context = ClientContext.from_row(
-                    match.iloc[
-                        0
-                    ].to_dict()
+                    client_details
                 )
 
     st.divider()
@@ -358,6 +363,8 @@ if page == "Dashboard":
     dashboard.render(
         client_id,
         client_context,
+        role,
+        client_details,
     )
 
 elif page == "Cross-Domain Analytics":

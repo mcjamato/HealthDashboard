@@ -1,0 +1,11 @@
+git status
+
+git add .
+
+git commit -m "v1.4.0 Add latest-month default and multi-month dashboard filters"
+
+git push
+
+git tag -a v1.4.0 -m "Latest-month default and multi-month dashboard filters"
+
+git push origin v1.4.0

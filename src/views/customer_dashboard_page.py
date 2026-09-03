@@ -62,14 +62,14 @@ class CustomerDashboardPage:
             )
             return
 
-        month = DashboardLayout.render_filter_bar(
+        selected_months = DashboardLayout.render_filter_bar(
             render_filter=lambda: (
-                MonthFilter.select_month(
+                MonthFilter.select_months(
                     frame,
-                    key=f"{domain}_dashboard_month",
-                    label="Display month",
+                    key_prefix=f"{domain}_dashboard",
                 )
             ),
+            title="Dashboard months",
             width_ratio=(
                 1,
                 4,
@@ -78,14 +78,22 @@ class CustomerDashboardPage:
 
         display = MonthFilter.filter(
             frame,
-            month,
+            selected_months,
         )
 
         if display.empty:
             st.warning(
-                "No records exist for the selected month."
+                "No records exist for the selected month selection."
             )
             return
+
+        selection_label = MonthFilter.selection_caption(
+            selected_months
+        )
+
+        st.caption(
+            f"Showing: {selection_label}"
+        )
 
         charts = []
 
@@ -137,14 +145,14 @@ class CustomerDashboardPage:
                     "Exercise duration",
                     first,
                     display,
-                    f"exercise_duration_{month}",
+                    f"exercise_duration_{selection_label}",
                     "exercise_duration",
                 ),
                 (
                     "Minutes by activity",
                     second,
                     grouped,
-                    f"exercise_activity_{month}",
+                    f"exercise_activity_{selection_label}",
                     "exercise_activity",
                 ),
             ]
@@ -213,14 +221,14 @@ class CustomerDashboardPage:
                     "Sleep and quality",
                     first,
                     display,
-                    f"health_sleep_{month}",
+                    f"health_sleep_{selection_label}",
                     "health_sleep",
                 ),
                 (
                     "Weight trend",
                     second,
                     weight_data,
-                    f"health_weight_{month}",
+                    f"health_weight_{selection_label}",
                     "health_weight",
                 ),
             ]
@@ -308,14 +316,14 @@ class CustomerDashboardPage:
                     "Mental wellness trends",
                     first,
                     display,
-                    f"mental_trends_{month}",
+                    f"mental_trends_{selection_label}",
                     "mental_trends",
                 ),
                 (
                     "Average wellness scores",
                     second,
                     averages,
-                    f"mental_averages_{month}",
+                    f"mental_averages_{selection_label}",
                     "mental_averages",
                 ),
             ]
@@ -375,14 +383,14 @@ class CustomerDashboardPage:
                     "Calorie trend",
                     first,
                     display,
-                    f"nutrition_calories_{month}",
+                    f"nutrition_calories_{selection_label}",
                     "nutrition_calories",
                 ),
                 (
                     "Macronutrient mix",
                     second,
                     macros,
-                    f"nutrition_macros_{month}",
+                    f"nutrition_macros_{selection_label}",
                     "nutrition_macros",
                 ),
             ]

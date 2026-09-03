@@ -1,0 +1,13 @@
+git status
+
+find . -name .DS_Store -delete
+
+git add .
+
+git commit -m "v1.5.1 Clean up macOS and repository ignore rules"
+
+git push
+
+git tag -a v1.5.1 -m "macOS and repository cleanup"
+
+git push origin v1.5.1

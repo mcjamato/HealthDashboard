@@ -82,3 +82,30 @@ Client logins are created by an administrator under:
 Each client login is linked to one client profile. After login, the client sees
 only Customer Dashboards and the wellness data-entry pages required for their
 own account. Clients cannot select or view another customer.
+
+
+## Version 1.4.0 dashboard filtering
+
+Dashboard views open with the newest available month checked automatically.
+Users can check additional Month Year values to compare multiple months. Only
+the newest month is shown initially.
+
+
+## Version 1.5.0
+
+- Dashboard month selection uses a compact popover with one checkbox per month.
+- Latest available month is selected by default.
+- Administrators can expand the selected client's full stored intake profile.
+- Cross-Domain Analytics provides selectable metric-pair scatter plots.
+- Correlation analysis exports CSV and Excel data.
+
+
+## Version 1.5.1
+
+Repository cleanup for macOS, GitHub Desktop, and Streamlit Cloud.
+
+- `.DS_Store` files are ignored.
+- Streamlit secrets remain outside Git.
+- Python cache and virtual-environment files are ignored.
+- The application ignores only its runtime SQLite database: `health_dashboard.db`.
+- Demo/sample assets remain trackable in GitHub.

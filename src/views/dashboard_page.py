@@ -144,11 +144,65 @@ class DashboardPage:
         self,
         client_id: int | None,
         client: dict | None = None,
+        role: str = "client",
+        client_details: dict | None = None,
     ) -> None:
         DashboardLayout.render_client_header(
             client,
             "📊 Dashboard",
         )
+
+        if (
+            role == "admin"
+            and client_details
+        ):
+            with st.expander(
+                "View full client intake information",
+                expanded=False,
+            ):
+                left, right = st.columns(
+                    2
+                )
+
+                with left:
+                    st.markdown(
+                        f"**Client ID:** "
+                        f"{client_details.get('id', 'Not available')}"
+                    )
+                    st.markdown(
+                        f"**First name:** "
+                        f"{client_details.get('first_name', 'Not available')}"
+                    )
+                    st.markdown(
+                        f"**Last name:** "
+                        f"{client_details.get('last_name', 'Not available')}"
+                    )
+                    st.markdown(
+                        f"**Email:** "
+                        f"{client_details.get('email', 'Not provided')}"
+                    )
+
+                with right:
+                    st.markdown(
+                        f"**Birth date:** "
+                        f"{client_details.get('birth_date', 'Not provided')}"
+                    )
+                    st.markdown(
+                        f"**Age:** "
+                        f"{client.get('age', 'Not available') if client else 'Not available'}"
+                    )
+                    st.markdown(
+                        f"**Created:** "
+                        f"{client_details.get('created_at', 'Not available')}"
+                    )
+                    st.markdown(
+                        "**Status:** Active"
+                    )
+
+                st.caption(
+                    "This section displays all intake fields "
+                    "currently stored in the client profile."
+                )
 
         samples = self._samples()
 
@@ -227,16 +281,14 @@ class DashboardPage:
             ignore_index=True,
         )
 
-        month = DashboardLayout.render_filter_bar(
+        selected_months = DashboardLayout.render_filter_bar(
             render_filter=lambda: (
-                MonthFilter.select_month(
+                MonthFilter.select_months(
                     available_dates,
-                    key=(
-                        "main_dashboard_month"
-                    ),
-                    label="Display month",
+                    key_prefix="main_dashboard",
                 )
             ),
+            title="Dashboard months",
             width_ratio=(
                 1,
                 4,
@@ -245,19 +297,27 @@ class DashboardPage:
 
         display_exercise = MonthFilter.filter(
             display_exercise,
-            month,
+            selected_months,
         )
         display_health = MonthFilter.filter(
             display_health,
-            month,
+            selected_months,
         )
         display_mental = MonthFilter.filter(
             display_mental,
-            month,
+            selected_months,
         )
         display_nutrition = MonthFilter.filter(
             display_nutrition,
-            month,
+            selected_months,
+        )
+
+        selection_label = MonthFilter.selection_caption(
+            selected_months
+        )
+
+        st.caption(
+            f"Showing: {selection_label}"
         )
 
         DashboardLayout.render_kpi_row(
@@ -352,7 +412,7 @@ class DashboardPage:
                     "Exercise duration",
                     figure,
                     display_exercise,
-                    f"exercise_{month}",
+                    f"exercise_{selection_label}",
                     "main_exercise",
                 )
             )
@@ -373,7 +433,7 @@ class DashboardPage:
                     "Sleep and recovery",
                     figure,
                     display_health,
-                    f"health_{month}",
+                    f"health_{selection_label}",
                     "main_health",
                 )
             )
@@ -402,7 +462,7 @@ class DashboardPage:
                     "Mental wellness",
                     figure,
                     display_mental,
-                    f"mental_wellness_{month}",
+                    f"mental_wellness_{selection_label}",
                     "main_mental",
                 )
             )
@@ -427,7 +487,7 @@ class DashboardPage:
                     "Nutrition",
                     figure,
                     display_nutrition,
-                    f"nutrition_{month}",
+                    f"nutrition_{selection_label}",
                     "main_nutrition",
                 )
             )

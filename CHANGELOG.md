@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.5.1] - macOS and Git Repository Cleanup
+
+### Changed
+- Added macOS `.DS_Store` exclusions for GitHub Desktop.
+- Added common Python cache and virtual-environment exclusions.
+- Added Streamlit secrets exclusion.
+- Added local editor/cache exclusions.
+- Removed the broad `*.db` approach.
+- The runtime SQLite database is now ignored specifically as `health_dashboard.db`.
+- SQLite journal/WAL/SHM sidecar files for that runtime database are ignored.
+- `sample_data/` and `docs/` are explicitly retained in Git.
+- Application version updated to 1.5.1.
+
+### Notes
+- The demo Excel workbook remains trackable in GitHub.
+- A future demo/sample SQLite database can also be committed intentionally because all `.db` files are no longer globally ignored.
+
+## [1.5.0] - Dashboard Range, Intake Details, and Correlation Analysis
+
+### Added
+- Dropdown-style month selector using a Streamlit popover with a checkbox next to every available month.
+- Latest available month remains the default graph range.
+- Administrator-only expandable client intake information on the main Dashboard.
+- Selectable X and Y metrics on Cross-Domain Analytics.
+- Scatter-plot correlation graph with least-squares trend line.
+- Pearson correlation coefficient, relationship strength, direction, and matched-day count.
+- CSV export for the selected correlation pair.
+- Excel export containing the selected pair, combined daily data, and full correlation matrix.
+- Expandable full correlation matrix table and combined daily data table.
+
+### Changed
+- Correlation analysis no longer depends on a matrix heat-map chart.
+- Month filters remain compact until the user opens the month-selection popover.
+- Application version updated to 1.5.0.
+
+### Administration
+- Full intake information is visible only on the administrator's main Dashboard.
+- Client users continue to see their normal dashboard and data-entry experience without the intake-information expander.
+
+## [1.4.0] - Multi-Month Dashboard Filters
+
+### Added
+- Checkbox-based month selection on the main dashboard.
+- Checkbox-based month selection on all customer dashboards.
+- Support for selecting multiple months simultaneously.
+- Selection summary showing the active Month Year values.
+
+### Changed
+- The newest available month is selected by default when a dashboard opens.
+- Only the latest month is displayed initially.
+- The previous All Months selector has been removed from dashboard views.
+- At least one month must remain selected.
+- Application version updated to 1.4.0.
+
 ## [1.3.1] - Client Role Navigation
 
 ### Added

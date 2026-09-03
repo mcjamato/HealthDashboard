@@ -121,7 +121,8 @@ class DashboardLayout:
         )
 
         with filter_column:
-            return render_filter()
+            with st.container(border=True):
+                return render_filter()
 
     @staticmethod
     def render_kpi_row(
