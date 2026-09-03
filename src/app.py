@@ -159,12 +159,12 @@ customer_dashboards = CustomerDashboardPage(
 )
 
 customer_importer = ExcelImporter(
-    clients,
-    client_intake,
-    exercise,
-    health,
-    mental,
-    nutrition,
+    clients=clients,
+    exercise=exercise,
+    health=health,
+    mental=mental,
+    nutrition=nutrition,
+    intake=client_intake,
 )
 
 blood_work_importer = BloodWorkImporter(

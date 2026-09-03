@@ -26,7 +26,22 @@ class ImportResult:
 class ExcelImporter:
     SHEETS = {"Clients", "Exercise", "Health", "MentalWellness", "Nutrition"}
 
-    def __init__(self, clients, intake, exercise, health, mental, nutrition) -> None:
+    def __init__(
+        self,
+        clients,
+        exercise,
+        health,
+        mental,
+        nutrition,
+        intake=None,
+    ) -> None:
+        """Create an importer with backward-compatible dependency ordering.
+
+        Versions before 1.6.0 supplied the five core repositories after
+        ``clients``. Version 1.6.0 added the intake repository. Keeping intake
+        optional and last means an older app/importer combination cannot fail
+        merely because the intake dependency was introduced.
+        """
         self.clients: ClientRepository = clients
         self.intake = intake
         self.repos = {
@@ -125,7 +140,8 @@ class ExcelImporter:
                 else:
                     client_id = int(existing["id"])
 
-                self.intake.upsert(client_id, self._intake_values(row))
+                if self.intake is not None:
+                    self.intake.upsert(client_id, self._intake_values(row))
                 imported += 1
             except Exception as exc:
                 rejected += 1
@@ -162,7 +178,8 @@ class ExcelImporter:
                 else:
                     client_id = int(existing["id"])
 
-                self.intake.upsert(client_id, self._intake_values(row))
+                if self.intake is not None:
+                    self.intake.upsert(client_id, self._intake_values(row))
                 imported += 1
             except Exception as exc:
                 rejected += 1

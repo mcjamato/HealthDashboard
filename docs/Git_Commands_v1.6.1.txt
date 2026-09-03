@@ -1,0 +1,6 @@
+git status
+git add .
+git commit -m "v1.6.1 Fix Streamlit Cloud ExcelImporter dependency mismatch"
+git push
+git tag -a v1.6.1 -m "Fix ExcelImporter dependency mismatch"
+git push origin v1.6.1

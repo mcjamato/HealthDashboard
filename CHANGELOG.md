@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.1] - Streamlit Cloud Importer Compatibility Fix
+
+### Fixed
+- Fixed `TypeError: ExcelImporter.__init__() takes 6 positional arguments but 7 were given`.
+- `ExcelImporter` now keeps the pre-v1.6 repository order and accepts the intake repository as an optional final dependency.
+- `app.py` now wires importer dependencies by keyword, preventing positional constructor drift.
+- Intake import remains enabled when the intake repository is supplied.
+
+### Deployment
+- Replace both `src/app.py` and `src/imports/excel_importer.py` together.
+- A full v1.6.1 package is recommended on Streamlit Community Cloud to prevent mixed-version source files.
+
 ## [1.6.0] - Full Intake Onboarding and 12-Month Demo Data
 
 ### Added

@@ -122,3 +122,8 @@ Sample files are in `sample_data/`:
 - `Wellness_Intake_Import_Template_v1.6.0.xlsx`
 - `Wellness_Intake_Import_Template_v1.6.0.csv`
 - `Wellness_Intake_10Clients_v1.6.0.csv`
+
+
+## Version 1.6.1
+
+This maintenance release fixes the Streamlit Cloud `ExcelImporter` constructor mismatch. The importer is backward-compatible with the pre-intake repository ordering, while `app.py` now uses explicit keyword dependency wiring. For Cloud deployments, replace the complete release or at minimum replace both `src/app.py` and `src/imports/excel_importer.py` together.
